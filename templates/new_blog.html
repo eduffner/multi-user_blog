@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<form name="blog-form" method="post">
+	<h1>Create New Blog</h1>
+
+	<label>
+		<div>Title:</div> 
+		<input type="text" name="title" autocomplete="off" value="{{title}}">
+	</label>
+	<div class="error">{{error}}</div>
+	<input type="submit"></input>
+</form>
+{% endblock %}

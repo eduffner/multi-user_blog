@@ -1,0 +1,23 @@
+<html>
+<head>
+  <link rel="stylesheet" type="text/css" href="/styles/styles.css">
+  <link href="https://fonts.googleapis.com/css?family=Raleway|Shadows+Into+Light+Two|Droid+Serif" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body>
+<div class="menu">
+	{% if user %}
+	<a href="/welcome">Welcome, {{ user.name }}!</a> |
+	{% endif %}
+	<a href="/blogs">Home</a> |
+	{% if user %}
+	<a href="/logout">Logout</a> |
+	{% else %}
+	<a href="/login">Login</a> |
+	{% endif %}
+	<a href="/signup">Sign Up</a> 
+</div>
+	{% block content %}
+	{% endblock %}
+</body>
+</html>

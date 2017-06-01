@@ -1,0 +1,122 @@
+body{
+	width: 800px;
+	margin: 0 auto;
+	padding: 10px;
+}
+form{
+	width: 400px;
+	margin: auto;
+}
+.error{
+	color: red;
+}
+.blog-title{
+	font-family: 'Droid Serif', serif;
+	font-size: 40px;
+}
+label {
+	display: block;
+	font-size: 20px;
+}
+
+input[type=text], input[type=password] {
+	width: 400px;
+	font-size: 20px;
+	padding: 2px;
+}
+.hidden {
+	display: none;
+}
+textarea {
+	width: 400px;
+	height: 200px;
+	font-size: 17px;
+}
+.blog-heading{
+	margin-top: 30px;
+	margin-bottom: 30px;
+	position: relative;
+}
+.blog-heading i {
+	position: absolute;
+	right: 0px;
+	top: 10px;
+	bottom: 10px;
+	font-size: 35px;
+}
+.comment {
+	width: 80%;
+	margin: auto;
+}
+.comment-heading{
+	position: relative;
+}
+.comment-form-text{
+	height: 100px;
+
+}
+
+i {
+	color: #999;
+	border: none;
+}
+i:hover {
+	cursor: hand;
+}
+input[type=submit] {
+	font-size: 24px;
+}
+
+hr {
+	margin: 20px auto;
+}
+
+.entry + .entry {
+	margin-top: 20px;
+}
+.entry-heading {
+	position: relative;
+    border-bottom: 2px solid lightblue;
+}
+
+.entry-title, .entry-created {
+	font-family: 'Shadows Into Light Two', cursive;
+	font-weight: bold;
+	font-size: 30px;
+	color: #999;
+	text-decoration: none;
+    color: initial;
+
+}
+
+.entry-created {
+	position: absolute;
+    right: 0px;
+    bottom: 0px;
+	font-size: 16px;
+	color: #999;
+}
+.menu{
+	font-family: 'Raleway', sans-serif;
+}
+.entry-text, menu{
+	font-family: 'Raleway', sans-serif;
+	margin-top: 5px;
+	font-size: 17px;
+
+}
+
+a {
+	text-decoration: none;
+	color:#000;
+}
+a:link    {color:#000;}  /* unvisited link  */
+a:visited {color:#000;}  /* visited link    */
+a:hover   {color:#000;}  /* mouse over link */
+a:active  {color:#000;}  /* selected link   */ 
+
+menu {
+	font-size: 10px;
+	float: right;
+	text-align: right;
+}

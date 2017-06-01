@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="blog-heading">
+	<div class="blog-title">{{user.name}}'s Blogs</div>
+	<i onclick="window.location = '/blog/new/';" class="material-icons">note_add</i>
+</div>
+{% for blog in blogs %}
+<div class="blog-heading">
+	<a href="/blog/{{blog.key().id()}}" class="blog-title"> {{ blog.title }} </a>
+	<i class="material-icons" onclick="window.location = '/blog/delete/{{blog.key().id()}}';">delete</i>
+
+</div>
+
+{% endfor %}
+{% endblock %}

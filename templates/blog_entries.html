@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="blog-heading">
+	<a href="/blog/{{blog.key().id()}}" class="blog-title"> {{ blog.title }} </a>
+	<i class="material-icons" onclick="window.location = '/{{blog.key().id()}}/entry/new/';">note_add</i>
+</div>
+{% for entry in entries %}
+	{{ entry.render() | safe }}
+{% endfor %}
+{% endblock %}

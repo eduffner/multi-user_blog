@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<form name="entry-form" method="post">
+	<h1>Add Entry to <a href="/blog/{{blog.key().id()}}" class="blog-title"> {{ blog.title }} </a></h1>
+
+	<label>
+		<div>Title:</div> 
+		<input type="text" name="title" autocomplete="off" value="{{title}}">
+	</label>
+
+	<label>
+		<div>Entry:</div>
+		<textarea name="text">{{text}}</textarea>
+	</label>
+
+	<div class="error">{{error}}</div>
+	<input type="submit"></input>
+</form>
+{% endblock %}
