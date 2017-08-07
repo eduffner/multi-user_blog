@@ -6,8 +6,8 @@
 </div>
 {% for blog in blogs %}
 <div class="blog-heading">
-	<a href="/blog/{{blog.key().id()}}" class="blog-title"> {{ blog.title }} </a>
-	<i class="material-icons" onclick="window.location = '/blog/delete/{{blog.key().id()}}';">delete</i>
+	<a href="/blog/{{blog.key.id()}}" class="blog-title"> {{ blog.title }} </a>
+	<i class="material-icons" onclick="window.location = '/blog/delete/{{blog.key.id()}}';">delete</i>
 
 </div>
 

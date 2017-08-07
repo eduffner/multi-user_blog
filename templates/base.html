@@ -9,13 +9,13 @@
 	{% if user %}
 	<a href="/welcome">Welcome, {{ user.name }}!</a> |
 	{% endif %}
-	<a href="/blogs">Home</a> |
+	<a href="/blogs">Home</a>
 	{% if user %}
-	<a href="/logout">Logout</a> |
+	| <a href="/logout">Logout</a>
 	{% else %}
-	<a href="/login">Login</a> |
-	{% endif %}
-	<a href="/signup">Sign Up</a> 
+	| <a href="/login">Login</a>
+	| <a href="/signup">Sign Up</a> 
+		{% endif %}
 </div>
 	{% block content %}
 	{% endblock %}

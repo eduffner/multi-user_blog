@@ -1,19 +1,19 @@
 <div class="entry">
 		<div class="entry-heading">
-			<a href="/blog/{{entry.key().id()}}" class="entry-title">{{entry.title}}</a>
+			<a href="/{{blog.key.id()}}/entry/{{entry.key.id()}}" class="entry-title">{{entry.title}}</a>
 			<div class="entry-created">{{entry.created.strftime("%b %d, %Y")}}</div>
 		</div>
 		<div><pre class="entry-text">{{entry.text}}</pre></div>		
 	</div>
-	<i class="material-icons" onclick="window.location = '/{{blog.key().id()}}/entry/new/{{entry.key().id()}}';">edit</i>
-	<i class="material-icons" onclick="window.location = '/{{blog.key().id()}}/entry/delete/{{entry.key().id()}}';">delete</i>
+	<i class="material-icons" onclick="window.location = '/{{blog.key.id()}}/entry/new/{{entry.key.id()}}';">edit</i>
+	<i class="material-icons" onclick="window.location = '/{{blog.key.id()}}/entry/delete/{{entry.key.id()}}';">delete</i>
 	<i class="material-icons"onclick="toggleComment();">comment</i>
 </div>
 <div class="comments">
 	{% for comment in entry.comments %}
 		{{ comment.render() | safe }}
 	{% endfor %}
-<form class="comment-form hidden" id="comment-form-{{entry.key().id()}}">
+<form class="comment-form hidden" id="comment-form-{{entry.key.id()}}">
 	<textarea class="comment-form-text"></textarea>
 	<button type="submit">Comment</button>
 </div>
@@ -21,7 +21,7 @@
 <script>
 	function toggleComment(){
 		console.log("toggle");
-		var classes = document.getElementById('comment-form-{{entry.key().id()}}').classList;
+		var classes = document.getElementById('comment-form-{{entry.key.id()}}').classList;
 		if classes.contains('hidden'){
 			classes.remove('hidden');
 		}

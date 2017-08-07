@@ -21,7 +21,7 @@ from string import letters
 import jinja2
 import webapp2
 
-from google.appengine.ext import db
+from google.appengine.ext import ndb
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
@@ -63,7 +63,7 @@ class BlogHandler(webapp2.RequestHandler):
         return cookie_val and check_secure_val(cookie_val)
 
     def login(self, user):
-        self.set_secure_cookie('user_id', str(user.key().id()))
+        self.set_secure_cookie('user_id', str(user.key.id()))
 
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
@@ -72,30 +72,38 @@ class BlogHandler(webapp2.RequestHandler):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
+        # bid = self.read_secure_cookie('blog_id')
+        # self.blog = 
+
+    # def set_blog(self, blog):
+    #     self.set_secure_cookie('blog_id', str(blog.key.id()))
+
+    # def exit_blog(self, blog):
+    #     self.response.headers.add_header('Set-Cookie', 'blog_id=; Path=/')
+
 
 def blog_key(name = 'default'):
-        return db.Key.from_path('Blog', name)
+        return ndb.Key('Blog', name)
 ## Blog
-class Blog(db.Model):
-    title = db.StringProperty(required = True)
-    user = db.StringProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
+class Blog(ndb.Model):
+    title = ndb.StringProperty(required = True)
+    user = ndb.StringProperty(required = True)
+    created = ndb.DateTimeProperty(auto_now_add = True)
 
     def render(self):
         return render_str("blog.html", blog=self, user=self.user)
 
 class BlogPage(BlogHandler):
     def get(self, blog_id):
-        b_key = blog_key(int(blog_id))
         entries = []
-        entries = Entry.all().ancestor(b_key).order('-created')
-        blog = Blog.get_by_id(int(blog_id))
-        print("blog title %s" % blog.title)
-        if not blog:
-            self.error(404)
-            return
         
-        self.render('blog_entries.html', entries=entries, blog=blog, user=self.user)
+        blog = Blog.get_by_id(int(blog_id), parent=self.user.key)
+       
+        if not blog:
+            self.render("error.html")
+            return
+        entries = Entry.query(ancestor=blog.key).fetch()
+        self.render('blog_entries.html', blog=blog, user=self.user, entries=entries)
 
 
 class NewBlog(BlogHandler):
@@ -104,62 +112,63 @@ class NewBlog(BlogHandler):
 
     def get(self, blog_id):
         if not self.user:
-            self.redirect('/blog')
+            self.render('login.html')
 
         if blog_id:
-            key = db.Key.from_path('Blog', int(blog_id))
-            blog = db.get(key)
+            key = ndb.Key('Blog', int(blog_id))
+            blog = ndb.get(key)
             if blog:
                 self.render_form(blog.title)
             else:
-                self.error(404)
+                self.render("error.html")
                 return
         else:
             self.render_form()
 
     def post(self, blog_id):
         if not self.user:
-            self.redirect('/blog')
+            self.render('blog.html')
 
 
         title = self.request.get('title')
 
         if title:
             if blog_id:
-                key = db.Key.from_path('Blog', int(blog_id))
-                entry = db.get(key)
+                key = ndb.Key('Blog', int(blog_id))
+                entry = ndb.get(key)
                 if entry:
                     entry.title = title
             else:  
-                blog = Blog(title=title, user=self.user.name)
+                blog = Blog(parent = self.user.key,
+                            title = title,
+                            user = self.user.name)
             blog.put()
-            self.redirect('/blog/%s' % str(blog.key().id()))
+            self.redirect('/blog/%s' % str(blog.key.id()))
         else:
             error = 'Both an Entry and Title are required'
             self.form(title, text, error)
 
 class DeleteBlog(BlogHandler):
     def get(self, blog_id):
-        key = db.Key.from_path('Blog', int(blog_id))
-        blog = db.get(key)
+        key = ndb.Key('Blog', int(blog_id))
+        blog = ndb.get(key)
         if not blog:
-            self.error(404)
+            self.render("error.html")
             return
         blog.delete()
-        blogs = Blog.all().filter('user =', self.user.name).order('-created')
+        blogs = Blog.query().filter('user =', self.user.name).order('-created')
         self.render("user_blogs.html", user=self.user, blogs=blogs)
 
 ## Entry
-class Entry(db.Model):
-    blog = db.ReferenceProperty(Blog, 'entries',required = True)
-    title = db.StringProperty(required = True)
-    text = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
+class Entry(ndb.Model):
+    title = ndb.StringProperty(required = True)
+    text = ndb.TextProperty(required = True)
+    created = ndb.DateTimeProperty(auto_now_add = True)
+    last_modified = ndb.DateTimeProperty(auto_now = True)
 
-    def render(self):
+    def render(self, blog):
         self._render_text = self.text.replace('\n', '<br>')
-        return render_str("entry.html", entry = self)
+        return render_str("entry.html", entry=self, blog=blog)
 
 
 class NewEntry(BlogHandler):
@@ -174,19 +183,18 @@ class NewEntry(BlogHandler):
             return
 
         if blog_id:
-            key = db.Key.from_path('Blog', int(blog_id))
-            blog = db.get(key)
-
+            blog = Blog.get_by_id(int(blog_id), parent=self.user.key)
+            
             if not blog:
-                self.error(404)
+                self.render("error.html", message="No blog Instance Found")
                 return
 
         if entry_id:
-            key = db.Key.from_path('Entry', int(entry_id), parent=blog_key(int(blog_id)))
-            entry = db.get(key)
+            key = ndb.Key('Entry', int(entry_id), parent=blog_key)
+            entry = ndb.get(key)
 
             if not entry:
-                self.error(404)
+                self.render("error.html", message="No entry Instance Found")
                 return
             
             self.render_form(entry.title, entry.text, blog)
@@ -209,21 +217,20 @@ class NewEntry(BlogHandler):
             if blog_id: 
                 b_key = blog_key(int(blog_id))
                 if entry_id:
-                    key = db.Key.from_path('Entry', int(entry_id), parent=b_key)
-                    entry = db.get(key)
+                    entry = ndb.get(key)
                     if entry:
                         entry.title = title
                         entry.text = text
            
                 else:
-                    blog = db.get(b_key)
-                    entry = Entry(title=title, text=text, blog=blog, parent=b_key)
+                    blog = Blog.get_by_id(int(blog_id), parent=self.user.key)
+                    entry = Entry(title=title, text=text, parent=blog.key)
             else:
-                self.error(404)
+                self.render("error.html")
                 return
 
             entry.put()
-            self.redirect('/%s/entry/%s' % (str(blog_id), str(entry.key().id()) ) )
+            self.redirect('/%s/entry/%s' % (str(blog_id), str(entry.key.id()) ) )
         else:
             error = 'Both an Entry and Title are required'
             self.form(title, text, error)
@@ -233,47 +240,40 @@ class DeleteEntry(BlogHandler):
         entry_id = int(kwargs['entry_id'])
         blog_id = int(kwargs['blog_id'])
         blog_key = blog_key(blog_id)
-        key = db.Key.from_path('Entry', int(entry_id), parent=blog_key)
-        entry = db.get(key)
+        key = ndb.Key('Entry', int(entry_id), parent=blog_key)
+        entry = ndb.get(key)
         if not entry:
-            self.error(404)
+            self.render("error.html")
             return
         entry.delete()
         self.render("blog_entries.html", user=self.user)
 
 class EntryPage(BlogHandler):
     def get(self, *args, **kwargs):
-        print("ENTRY PAGES   DLKFJLSKDJF")
         blog_id = kwargs['blog_id']
 
-        b_key = blog_key(int(blog_id))
-        blog = db.get(b_key)
-        print("blog title: %s" % blog.title)
+        blog = Blog.get_by_id(int(blog_id), parent=self.user.key)
 
         if not blog:
-            self.error(404)
+            self.render("error.html", message="No blog instance Found.")
             return
         
         entry_id = kwargs['entry_id']
 
-        key = db.Key.from_path('Entry', int(entry_id), parent=b_key)
-        entry = db.get(key)
-        print("entry title: %s" % entry.title)
+        entry = Entry.get_by_id(int(entry_id), parent=blog.key)
         entries = []
 
         if not entry:
-            self.error(404)
+            self.render("error.html", message="No entry instance Found.")
             return
 
         entries.append(entry)
-        print(blog)
         self.render("blog_entries.html", entries=entries, user=self.user, blog=blog)
 
 ## Comment
-class Comment(db.Model):
-    entry = db.ReferenceProperty(Entry, 'comments');
-    created = db.DateTimeProperty(auto_now_add = True)
-    user = db.StringProperty(required = True)
+class Comment(ndb.Model):
+    created = ndb.DateTimeProperty(auto_now_add = True)
+    user = ndb.StringProperty(required = True)
 
     def render(self):
         return render_str("entry.html", comment = self)
@@ -297,20 +297,21 @@ def valid_pw(name, password, h):
     return h == make_pw_hash(name, password, salt)
 
 def users_key(group = 'default'):
-    return db.Key.from_path('users', group)
+    return ndb.Key('users', group)
 
-class User(db.Model):
-    name = db.StringProperty(required = True)
-    pw_hash = db.StringProperty(required = True)
-    email = db.StringProperty()
+class User(ndb.Model):
+    name = ndb.StringProperty(required = True)
+    pw_hash = ndb.StringProperty(required = True)
+    email = ndb.StringProperty()
 
     @classmethod
     def by_id(cls, uid):
-        return User.get_by_id(uid, parent = users_key())
+        print("uid: %s" % uid)
+        return User.get_by_id(uid, users_key())
 
     @classmethod
     def by_name(cls, name):
-        u = User.all().filter('name =', name).get()
+        u = User.query().filter(User.name == name).get()
         return u
 
     @classmethod
@@ -329,14 +330,17 @@ class User(db.Model):
 
 class MainPage(BlogHandler):
     def get(self):
+        
         if(self.user):
-            print("blogsssss:")
-            blogs = Blog.all().filter('user =', self.user.name).order('-created')
+            
+            blogs = Blog.query(parent=self.user.key).fetch()
             self.render('user_blogs.html', blogs=blogs, user=self.user)
-            for blog in blogs:
-                print("%s" % blog.title)
+
         else:
-            self.render('login.html')
+            self.redirect('/login')
+
+    def post(self):
+        print('User: %s' % self.user)
 
 class Rot13(BlogHandler):
     def get(self):
@@ -399,11 +403,10 @@ class Login(BlogHandler):
     def post(self):
         username = self.request.get('username')
         password = self.request.get('password')
-        users = User.all()
-        for user in users:
-            print("username: %s" % user.name)
-            print("password: %s" % user.pw_hash)
+        users = User.query()
+
         u = User.login(username, password)
+        
         if u:
             self.login(u)
             self.redirect('/blogs')
@@ -422,7 +425,7 @@ class Welcome(BlogHandler):
         if self.user:
             self.render("/welcome.html", user = self.user)
         else: 
-            self.redirect('/login')
+            self.render("/login.html")
 
 def render_icons(edit=False):
     if edit:
